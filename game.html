@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Mining Empire</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a1a, #1a1a2e);
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 2.5em;
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88;
+            margin-bottom: 30px;
+        }
+        
+        .status-panel {
+            background: rgba(26, 26, 46, 0.8);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .status-left, .status-right {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .status-right {
+            text-align: right;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            background: rgba(26, 26, 46, 0.8);
+            border: 2px solid #88aaff;
+            border-radius: 10px;
+            padding: 20px;
+            height: fit-content;
+        }
+        
+        .content-area {
+            background: rgba(26, 26, 46, 0.8);
+            border: 2px solid #88aaff;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 500px;
+        }
+        
+        .menu-button {
+            width: 100%;
+            padding: 15px;
+            margin: 5px 0;
+            background: linear-gradient(45deg, #0066cc, #0099ff);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .menu-button:hover {
+            background: linear-gradient(45deg, #0099ff, #00ccff);
+            transform: translateY(-2px);
+        }
+        
+        .menu-button.active {
+            background: linear-gradient(45deg, #00ff88, #00cc66);
+        }
+        
+        .action-button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: linear-gradient(45deg, #ff6600, #ff8800);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .action-button:hover {
+            background: linear-gradient(45deg, #ff8800, #ffaa00);
+            transform: translateY(-2px);
+        }
+        
+        .action-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .resource-item, .destination-item, .outpost-item, .shop-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #666;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .resource-item.available {
+            border-color: #00ff88;
+        }
+        
+        .destination-item.available {
+            border-color: #00ff88;
+        }
+        
+        .destination-item.unavailable {
+            border-color: #ff4444;
+            opacity: 0.6;
+        }
+        
+        .shop-item.affordable {
+            border-color: #00ff88;
+        }
+        
+        .shop-item.expensive {
+            border-color: #ff4444;
+            opacity: 0.6;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #666;
+            color: #ccc;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .message.success {
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+        }
+        
+        .message.error {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+        }
+        
+        .header {
+            font-size: 1.5em;
+            color: #88aaff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .info-text {
+            color: #ccc;
+            line-height: 1.6;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Force start screen to be visible when not hidden */
+        .start-screen:not(.hidden) {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Game Screen Full Viewport */
+        #game-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #0a0a1a, #1a1a2e);
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        /* Start Screen Styles */
+        .start-screen {
+            display: flex !important;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, #0a0a1a, #1a1a2e);
+            z-index: 5000;
+        }
+        
+        .start-menu {
+            background: rgba(26, 26, 46, 0.9);
+            border: 2px solid #00ff88;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            min-width: 300px;
+        }
+        
+        .start-button {
+            width: 250px;
+            padding: 15px;
+            margin: 10px 0;
+            background: linear-gradient(45deg, #0066cc, #0099ff);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: block;
+        }
+        
+        .start-button:hover:not(.disabled) {
+            background: linear-gradient(45deg, #0099ff, #00ccff);
+            transform: translateY(-2px);
+        }
+        
+        .start-button.disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        /* Settings Screen Styles */
+        .settings-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, #0a0a1a, #1a1a2e);
+            z-index: 1000;
+        }
+        
+        .settings-menu {
+            background: rgba(26, 26, 46, 0.9);
+            border: 2px solid #88aaff;
+            border-radius: 15px;
+            padding: 40px;
+            min-width: 400px;
+        }
+        
+        .setting-item {
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .setting-item label {
+            color: #ffffff;
+            font-weight: bold;
+        }
+        
+        .setting-item input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #666;
+            border-radius: 5px;
+            color: white;
+            padding: 8px 12px;
+            font-size: 14px;
+            width: 120px;
+        }
+        
+        .setting-item input:focus {
+            border-color: #00ff88;
+            outline: none;
+        }
+        
+        /* Welcome Screen Styles */
+        .welcome-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, #0a0a1a, #1a1a2e);
+            z-index: 1000;
+        }
+        
+        .welcome-content {
+            background: rgba(26, 26, 46, 0.95);
+            border: 2px solid #00ff88;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+        }
+        
+        .briefing-content {
+            text-align: left;
+        }
+        
+        .welcome-text {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #666;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            line-height: 1.6;
+            color: #ffffff;
+        }
+        
+        .welcome-text h3 {
+            color: #00ff88;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .welcome-text p {
+            margin: 10px 0;
+        }
+        
+        .welcome-text .highlight {
+            color: #88aaff;
+            font-weight: bold;
+        }
+        
+        .welcome-text .warning {
+            color: #ffaa44;
+            font-weight: bold;
+        }
+        
+        .welcome-actions {
+            text-align: center;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title" id="main-title">SPACE MINING EMPIRE</h1>
+        
+        <!-- Debug Panel (minimized) -->
+        <div id="debug-panel" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #00ff88; padding: 8px; border: 1px solid #00ff88; font-size: 11px; z-index: 10000; border-radius: 5px; cursor: pointer;" onclick="window.debugState()" title="Click for debug info">
+            <div>Debug: <span id="debug-last-action">ready</span></div>
+        </div>
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="start-screen">
+            <div class="start-menu">
+                <h2 style="color: #88aaff; text-align: center; margin-bottom: 30px;">Welcome, Commander</h2>
+                <button class="start-button" onclick="newGame()" id="new-game-btn">🚀 New Game</button>
+                <button class="start-button disabled" onclick="continueGame()" disabled>💾 Continue Game</button>
+                <button class="start-button" onclick="showSettings()">⚙️ Settings</button>
+            </div>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="settings-screen hidden">
+            <div class="settings-menu">
+                <h2 style="color: #88aaff; text-align: center; margin-bottom: 30px;">Game Settings</h2>
+                <div class="setting-item">
+                    <label for="starting-credits">Starting Credits:</label>
+                    <input type="number" id="starting-credits" value="1000" min="500" max="10000" step="100">
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="action-button" onclick="saveSettings()">Save Settings</button>
+                    <button class="action-button" onclick="cancelSettings()">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="welcome-screen hidden">
+            <div class="welcome-content">
+                <div class="welcome-header">
+                    <h2 style="color: #00ff88; text-align: center; margin-bottom: 20px;">🚀 MISSION BRIEFING 🚀</h2>
+                </div>
+                <div class="briefing-content">
+                    <div id="welcome-message" class="welcome-text">
+                        <!-- Dynamic content will be inserted here -->
+                    </div>
+                    <div class="welcome-actions">
+                        <button class="start-button" onclick="enterGameSimple()">🚀 Begin Mission</button>
+                        <button class="action-button" onclick="backToStart()" style="margin-top: 10px;">← Back to Menu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Game Screen (Full Screen) -->
+    <div id="game-screen" class="hidden">
+        <div class="status-panel">
+            <div class="status-left">
+                <div id="player-info" class="header">Commander</div>
+                <div id="credits">Credits: 1000</div>
+                <div id="location">Location: Unknown</div>
+            </div>
+            <div class="status-right">
+                <div id="ship-info" class="header">Ship: Unknown</div>
+                <div id="cargo">Cargo: 0/50</div>
+                <div id="fuel">Fuel: 100/100</div>
+            </div>
+        </div>
+    
+        <div class="main-content">
+            <div class="sidebar">
+                <h3 style="color: #88aaff; text-align: center; margin-top: 0;">Game Menu</h3>
+                <button class="menu-button active" onclick="showInterface('mining')">Mining Operations</button>
+                <button class="menu-button" onclick="showInterface('location')">Location Info</button>
+                <button class="menu-button" onclick="showInterface('travel')">Space Travel</button>
+                <button class="menu-button" onclick="showInterface('trading')">Trading Post</button>
+                <button class="menu-button" onclick="showInterface('shop')">Ship Shop</button>
+            </div>
+            
+            <div class="content-area">
+                <div id="mining-interface" class="interface">
+                    <div class="header">Mining Operations</div>
+                    <div id="location-info" class="info-text"></div>
+                    <div id="resources-list"></div>
+                </div>
+                
+                <div id="location-interface" class="interface hidden">
+                    <div class="header">Location Information</div>
+                    <div id="detailed-location-info" class="info-text"></div>
+                </div>
+                
+                <div id="travel-interface" class="interface hidden">
+                    <div class="header">Space Travel</div>
+                    <div id="destinations-list"></div>
+                </div>
+                
+                <div id="trading-interface" class="interface hidden">
+                    <div class="header">Trading Post</div>
+                    <div id="outposts-list"></div>
+                </div>
+                
+                <div id="shop-interface" class="interface hidden">
+                    <div class="header">Ship Shop</div>
+                    <div class="tabs">
+                        <div class="tab active" onclick="showTab('upgrades')">Upgrades</div>
+                        <div class="tab" onclick="showTab('ships')">New Ships</div>
+                    </div>
+                    <div id="upgrades-tab" class="tab-content active"></div>
+                    <div id="ships-tab" class="tab-content"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        let currentInterface = 'mining';
+        let gameData = {};
+        let gameStarted = false;
+        let pageLoaded = false;
+        let preventAutoStart = false; // Allow normal game start
+        let gameScreenActive = false; // Track if game screen is active
+        
+        // Debug function to update status panel
+        function updateDebugPanel(action) {
+            document.getElementById('debug-last-action').textContent = action || 'unknown';
+            
+            // Detailed logging for console
+            const startScreen = document.getElementById('start-screen');
+            const welcomeScreen = document.getElementById('welcome-screen');
+            
+            console.log('Debug Update:', action, {
+                gameStarted,
+                startVisible: !startScreen.classList.contains('hidden'),
+                welcomeVisible: !welcomeScreen.classList.contains('hidden')
+            });
+        }
+        
+        // Initialize start screen
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing start screen...');
+            updateDebugPanel('DOM loaded');
+            
+            console.log('All screen elements found:', {
+                start: !!document.getElementById('start-screen'),
+                settings: !!document.getElementById('settings-screen'), 
+                welcome: !!document.getElementById('welcome-screen'),
+                game: !!document.getElementById('game-screen')
+            });
+            
+            // Ensure all screens are hidden first
+            document.getElementById('settings-screen').classList.add('hidden');
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            updateDebugPanel('screens hidden');
+            
+            // Show the start screen immediately - don't hide it first
+            showStartScreen();
+            console.log('Start screen should now be visible');
+            updateDebugPanel('showStartScreen called');
+            
+            // Add event listener as backup to onclick
+            const newGameBtn = document.getElementById('new-game-btn');
+            if (newGameBtn) {
+                console.log('New Game button found, adding event listener');
+                newGameBtn.addEventListener('click', function(e) {
+                    console.log('New Game button clicked via event listener');
+                    e.preventDefault();
+                    newGame();
+                });
+            } else {
+                console.error('New Game button not found!');
+            }
+            
+            // Mark page as loaded but keep auto-start prevention
+            pageLoaded = true;
+            // Keep preventAutoStart = true to block any automatic execution
+            
+            // Check if something else is triggering game start
+            setTimeout(() => {
+                console.log('1 second after load - checking screen visibility:');
+                console.log('Start screen visible:', !document.getElementById('start-screen').classList.contains('hidden'));
+                console.log('Welcome screen visible:', !document.getElementById('welcome-screen').classList.contains('hidden'));
+                console.log('Game started flag:', gameStarted);
+                updateDebugPanel('1 second after load check');
+            }, 1000);
+        });
+        
+        // Start screen functions
+        function showStartScreen() {
+            console.log('showStartScreen() called');
+            console.log('Start screen element exists:', !!document.getElementById('start-screen'));
+            
+            // Reset game screen active flag
+            gameScreenActive = false;
+            
+            // Force show title and start screen
+            document.getElementById('main-title').style.display = 'block';
+            const startScreen = document.getElementById('start-screen');
+            startScreen.style.display = 'flex';
+            startScreen.classList.remove('hidden');
+            
+            // Force hide other screens
+            document.getElementById('settings-screen').style.display = 'none';
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'none';
+            
+            console.log('Start screen classes after update:', startScreen.className);
+            console.log('Start screen visible:', !startScreen.classList.contains('hidden'));
+            updateDebugPanel('showStartScreen executed');
+        }
+        
+        function newGame() {
+            console.log('New Game button clicked');
+            console.log('Page loaded:', pageLoaded);
+            console.log('Prevent auto start:', preventAutoStart);
+            console.log('Current start screen classes:', document.getElementById('start-screen').className);
+            console.log('Stack trace:', new Error().stack);
+            updateDebugPanel('newGame called');
+            
+            // Allow normal game start now
+            if (preventAutoStart) {
+                console.log('Auto-start prevention enabled - skipping');
+                return;
+            }
+            
+            startGame();
+        }
+        
+        // Global function for debugging - can be called from browser console
+        window.testNewGame = function() {
+            console.log('Testing New Game from console...');
+            preventAutoStart = false; // Temporarily allow it
+            newGame();
+        };
+        
+        window.forceStartScreen = function() {
+            console.log('Forcing start screen to show...');
+            gameStarted = false;
+            preventAutoStart = true; // Re-enable protection
+            showStartScreen();
+            updateDebugPanel('force start screen called');
+        };
+        
+        window.debugState = function() {
+            console.log('Current game state:');
+            console.log('gameStarted:', gameStarted);
+            console.log('Start screen classes:', document.getElementById('start-screen').className);
+            console.log('Welcome screen classes:', document.getElementById('welcome-screen').className);
+            console.log('Start screen visible:', !document.getElementById('start-screen').classList.contains('hidden'));
+            console.log('Welcome screen visible:', !document.getElementById('welcome-screen').classList.contains('hidden'));
+            console.log('Welcome message element exists:', !!document.getElementById('welcome-message'));
+            console.log('Welcome message content length:', document.getElementById('welcome-message')?.innerHTML?.length || 0);
+        };
+        
+        window.testWelcomeMessage = function() {
+            console.log('Testing welcome message...');
+            const welcomeEl = document.getElementById('welcome-message');
+            if (welcomeEl) {
+                welcomeEl.innerHTML = '<h3>TEST MESSAGE</h3><p>This is a test to see if the welcome message works!</p>';
+                console.log('Test message set');
+            } else {
+                console.error('Welcome message element not found!');
+            }
+        };
+        
+        window.forceShowStartScreen = function() {
+            console.log('Force showing start screen...');
+            showStartScreen();
+        };
+        
+        window.forceShowWelcomeScreen = function() {
+            console.log('Force showing welcome screen for testing...');
+            // Set some test content first
+            document.getElementById('welcome-message').innerHTML = '<h3>TEST WELCOME SCREEN</h3><p>This is a test to verify the welcome screen shows up properly!</p>';
+            showWelcomeScreen();
+        };
+        
+        window.forceShowGameScreen = function() {
+            console.log('Force showing game screen for testing...');
+            enterGame();
+        };
+        
+        function continueGame() {
+            // Will be implemented with database save system
+            showMessage('Save system not yet implemented!', 'error');
+        }
+        
+        function showSettings() {
+            document.getElementById('main-title').style.display = 'block';
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('settings-screen').classList.remove('hidden');
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+        }
+        
+        function showWelcomeScreen() {
+            console.log('showWelcomeScreen() called');
+            console.log('Stack trace for showWelcomeScreen:', new Error().stack);
+            
+            // Prevent showing welcome screen if game is already active
+            if (gameScreenActive) {
+                console.log('Game screen is active, ignoring showWelcomeScreen call');
+                return;
+            }
+            
+            updateDebugPanel('showWelcomeScreen called');
+            
+            // Force hide all other screens
+            document.getElementById('main-title').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('settings-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'none';
+            
+            // Force show welcome screen
+            const welcomeScreen = document.getElementById('welcome-screen');
+            welcomeScreen.style.display = 'flex';
+            welcomeScreen.style.position = 'fixed';
+            welcomeScreen.style.top = '0';
+            welcomeScreen.style.left = '0';
+            welcomeScreen.style.width = '100%';
+            welcomeScreen.style.height = '100%';
+            welcomeScreen.style.zIndex = '6000';
+            welcomeScreen.classList.remove('hidden');
+            
+            console.log('Welcome screen forced visible');
+            updateDebugPanel('showWelcomeScreen executed');
+        }
+        
+        function backToStart() {
+            showStartScreen();
+        }
+        
+        function saveSettings() {
+            const startingCredits = parseInt(document.getElementById('starting-credits').value);
+            showStartScreen();
+            showMessage(`Settings saved! Starting credits: ${startingCredits}`, 'success');
+        }
+        
+        function cancelSettings() {
+            // Reset to defaults
+            document.getElementById('starting-credits').value = '1000';
+            showStartScreen();
+        }
+        
+        async function startGame() {
+            console.log('startGame() called');
+            console.log('Stack trace for startGame:', new Error().stack);
+            updateDebugPanel('startGame called');
+            
+            if (gameStarted) {
+                console.log('Game already started, ignoring');
+                return;
+            }
+            
+            // Additional safety check
+            if (preventAutoStart) {
+                console.log('Auto-start prevention is enabled - blocking execution');
+                return;
+            }
+            
+            const startingCredits = parseInt(document.getElementById('starting-credits').value);
+            console.log('Starting credits:', startingCredits);
+            
+            try {
+                // Initialize game with settings
+                console.log('Calling init_game API...');
+                const result = await apiCall('init_game', 'POST', { starting_credits: startingCredits });
+                console.log('API result:', result);
+                
+                if (result && result.success) {
+                    gameStarted = true;
+                    console.log('Game initialized successfully, showing welcome screen');
+                    
+                    // Get game data for welcome message
+                    await updateStatus();
+                    const locationData = await apiCall('location');
+                    
+                    // Generate welcome briefing
+                    await generateWelcomeBriefing(startingCredits, locationData);
+                    
+                    // Show welcome screen ONLY if game screen is not active
+                    if (!gameScreenActive) {
+                        console.log('About to show welcome screen - game initialized successfully');
+                        updateDebugPanel('about to show welcome screen');
+                        showWelcomeScreen();
+                    } else {
+                        console.log('Game screen is active, skipping welcome screen');
+                    }
+                } else {
+                    console.error('Game initialization failed:', result);
+                    showMessage(`Failed to start game: ${result ? result.message : 'Unknown error'}`, 'error');
+                    
+                    // Show welcome screen with fallback content when API fails (only if game screen not active)
+                    if (!gameScreenActive) {
+                        console.log('API failed, showing welcome screen with fallback content');
+                        updateDebugPanel('fallback welcome screen (failed init)');
+                        await generateWelcomeBriefing(startingCredits, null);
+                        showWelcomeScreen();
+                    } else {
+                        console.log('Game screen is active, skipping fallback welcome screen');
+                    }
+                }
+            } catch (error) {
+                console.error('Error starting game:', error);
+                showMessage('Failed to start game. Check console for details.', 'error');
+                
+                // Show welcome screen with fallback content when exception occurs (only if game screen not active)
+                if (!gameScreenActive) {
+                    console.log('Exception occurred, showing welcome screen with fallback content');
+                    updateDebugPanel('fallback welcome screen (exception)');
+                    await generateWelcomeBriefing(startingCredits, null);
+                    showWelcomeScreen();
+                } else {
+                    console.log('Game screen is active, skipping exception fallback welcome screen');
+                }
+            }
+        }
+        
+        async function generateWelcomeBriefing(startingCredits, locationData) {
+            console.log('generateWelcomeBriefing called with:', { startingCredits, locationData });
+            updateDebugPanel('generateWelcomeBriefing called');
+            
+            try {
+                // Generate a random miner ID
+                const minerID = Math.floor(Math.random() * 90000) + 10000; // 5-digit ID
+                
+                // Get destinations info to find nearest trading post
+                let destinations = [];
+                let nearestTrading = null;
+                
+                try {
+                    destinations = await apiCall('destinations');
+                    if (destinations && Array.isArray(destinations)) {
+                        nearestTrading = destinations.find(dest => dest.has_outpost);
+                    }
+                } catch (error) {
+                    console.warn('Could not load destinations for briefing:', error);
+                }
+                
+                // Ensure we have valid data with fallbacks
+                const locationName = locationData?.name || 'Mining Asteroid Alpha-7';
+                const bodyType = locationData?.body_type || 'asteroid';
+                const distance = locationData?.distance || 2.3;
+                const resources = locationData?.resources ? Object.keys(locationData.resources) : ['Iron', 'Copper', 'Silicon'];
+                const tradingName = nearestTrading?.name || 'Frontier Station';
+                const tradingDistance = nearestTrading?.distance || 1.5;
+                
+                const welcomeHTML = `
+                    <h3>Welcome, Miner ${minerID}!</h3>
+                    <p>You have been assigned to <span class="highlight">${locationName}</span>, a remote ${bodyType} on the outer rim of known space.</p>
+                    
+                    <p><strong>Your Mission:</strong> Extract valuable resources and build a profitable mining empire!</p>
+                    
+                    <p><strong>Current Situation:</strong></p>
+                    <ul>
+                        <li>📍 <strong>Location:</strong> ${locationName} (${distance.toFixed(1)} AU from civilization)</li>
+                        <li>💰 <strong>Starting Credits:</strong> ${startingCredits} credits</li>
+                        <li>🚀 <strong>Ship:</strong> Rusty Prospector (basic mining vessel)</li>
+                        <li>⛏️ <strong>Available Resources:</strong> ${resources.join(', ')}</li>
+                    </ul>
+                    
+                    <p><span class="warning">⚠️ Important:</span> This is a mining-only location! To sell your cargo and earn credits, you must travel to <span class="highlight">${tradingName}</span> (${tradingDistance.toFixed(1)} AU away).</p>
+                    
+                    <p><strong>Strategy Tips:</strong></p>
+                    <ul>
+                        <li>🔋 <strong>Fuel Management:</strong> Monitor your fuel - running out strands you!</li>
+                        <li>💼 <strong>Cargo Space:</strong> Fill your cargo hold before traveling to maximize profits</li>
+                        <li>🔄 <strong>Trade Route:</strong> Mine here → Travel to trading posts → Sell cargo → Return</li>
+                        <li>⬆️ <strong>Upgrades:</strong> Visit ship shops to improve your vessel's capabilities</li>
+                    </ul>
+                    
+                    <p style="text-align: center; margin-top: 20px; color: #00ff88; font-weight: bold;">
+                        The galaxy awaits your entrepreneurial spirit, Commander!
+                    </p>
+                `;
+                
+                console.log('Setting welcome message HTML, length:', welcomeHTML.length);
+                document.getElementById('welcome-message').innerHTML = welcomeHTML;
+                console.log('Welcome message set successfully');
+                updateDebugPanel('welcome message HTML set');
+            } catch (error) {
+                console.error('Error generating welcome briefing:', error);
+                updateDebugPanel('welcome briefing error');
+                // Fallback content if everything fails
+                const fallbackHTML = `
+                    <h3>Welcome, Commander!</h3>
+                    <p>You have been assigned to a remote mining operation on the outer rim of known space.</p>
+                    
+                    <p><strong>Your Mission:</strong> Extract valuable resources and build a profitable mining empire!</p>
+                    
+                    <p><strong>Current Situation:</strong></p>
+                    <ul>
+                        <li>💰 <strong>Starting Credits:</strong> ${startingCredits} credits</li>
+                        <li>🚀 <strong>Ship:</strong> Rusty Prospector (basic mining vessel)</li>
+                        <li>⛏️ <strong>Mission:</strong> Mine resources and trade for profit</li>
+                    </ul>
+                    
+                    <p><strong>Strategy Tips:</strong></p>
+                    <ul>
+                        <li>🔋 <strong>Fuel Management:</strong> Monitor your fuel - running out strands you!</li>
+                        <li>💼 <strong>Cargo Space:</strong> Fill your cargo hold before traveling to maximize profits</li>
+                        <li>🔄 <strong>Trade Route:</strong> Mine → Travel to trading posts → Sell cargo → Return</li>
+                        <li>⬆️ <strong>Upgrades:</strong> Visit ship shops to improve your vessel's capabilities</li>
+                    </ul>
+                    
+                    <p style="text-align: center; margin-top: 20px; color: #00ff88; font-weight: bold;">
+                        The galaxy awaits your entrepreneurial spirit, Commander!
+                    </p>
+                `;
+                
+                console.log('Setting fallback HTML, length:', fallbackHTML.length);
+                document.getElementById('welcome-message').innerHTML = fallbackHTML;
+                console.log('Fallback welcome message set');
+                updateDebugPanel('fallback welcome message set');
+            }
+        }
+        
+        function enterGameSimple() {
+            console.log('=== ENTERING GAME SIMPLE MODE ===');
+            updateDebugPanel('enterGameSimple called');
+            
+            // Set game screen as active FIRST to block any interference
+            gameScreenActive = true;
+            
+            // Force hide ALL other screens
+            document.getElementById('main-title').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('settings-screen').style.display = 'none';
+            document.getElementById('welcome-screen').style.display = 'none';
+            
+            // Force show game screen with aggressive styling
+            const gameScreen = document.getElementById('game-screen');
+            gameScreen.style.display = 'block';
+            gameScreen.style.position = 'fixed';
+            gameScreen.style.top = '0';
+            gameScreen.style.left = '0';
+            gameScreen.style.width = '100%';
+            gameScreen.style.height = '100%';
+            gameScreen.style.zIndex = '9999';
+            gameScreen.style.visibility = 'visible';
+            gameScreen.style.opacity = '1';
+            gameScreen.classList.remove('hidden');
+            
+            console.log('=== GAME SCREEN SHOULD NOW BE VISIBLE ===');
+            updateDebugPanel('game screen forced visible');
+            
+            // Simple success message
+            setTimeout(() => {
+                showMessage('Welcome to your mining empire! Use the menu on the left.', 'success');
+            }, 100);
+            
+            console.log('=== ENTER GAME SIMPLE COMPLETE ===');
+        }
+        
+        async function enterGame() {
+            console.log('Entering main game screen');
+            updateDebugPanel('enterGame called');
+            
+            // Force hide all menu screens and title
+            document.getElementById('main-title').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('settings-screen').style.display = 'none';
+            document.getElementById('welcome-screen').style.display = 'none';
+            
+            // Force show game screen
+            const gameScreen = document.getElementById('game-screen');
+            gameScreen.style.display = 'block';
+            gameScreen.style.position = 'fixed';
+            gameScreen.style.top = '0';
+            gameScreen.style.left = '0';
+            gameScreen.style.width = '100%';
+            gameScreen.style.height = '100%';
+            gameScreen.style.zIndex = '1000';
+            gameScreen.classList.remove('hidden');
+            
+            // Mark game screen as active to prevent interference
+            gameScreenActive = true;
+            
+            console.log('Game screen should now be visible');
+            updateDebugPanel('game screen shown');
+            
+            console.log('Game screen shown, skipping interface load for now...');
+            showMessage('Welcome to your mining empire, Commander! Use the menu on the left to navigate.', 'success');
+            updateDebugPanel('game entered successfully');
+            
+            // Load interface after a short delay to ensure game screen is stable
+            setTimeout(async () => {
+                console.log('Loading location interface...');
+                try {
+                    await showInterface('location');
+                    console.log('Location interface loaded successfully');
+                } catch (error) {
+                    console.error('Error loading location interface:', error);
+                }
+            }, 500);
+        }
+        
+        // API functions
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            try {
+                console.log(`API Call: ${method} /api/${endpoint}`, data);
+                
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                
+                if (data) {
+                    options.body = JSON.stringify(data);
+                    console.log('Request body:', options.body);
+                }
+                
+                const response = await fetch(`/api/${endpoint}`, options);
+                console.log('Response status:', response.status);
+                
+                const result = await response.json();
+                console.log('Response data:', result);
+                
+                return result;
+            } catch (error) {
+                console.error('API Error:', error);
+                return { success: false, message: 'Connection error' };
+            }
+        }
+        
+        // Update status panel
+        async function updateStatus() {
+            try {
+                const status = await apiCall('status');
+                if (status && !status.error) {
+                    document.getElementById('player-info').textContent = `Commander ${status.player_name}`;
+                    document.getElementById('credits').textContent = `Credits: ${Math.floor(status.credits)}`;
+                    document.getElementById('location').textContent = `Location: ${status.location}`;
+                    document.getElementById('ship-info').textContent = `Ship: ${status.ship_name}`;
+                    document.getElementById('cargo').textContent = `Cargo: ${status.cargo_used}/${status.cargo_capacity}`;
+                    document.getElementById('fuel').textContent = `Fuel: ${status.current_fuel}/${status.fuel_capacity}`;
+                    
+                    gameData.status = status;
+                } else {
+                    console.log('Status error:', status ? status.error : 'No response');
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        }
+        
+        // Show interface
+        async function showInterface(interfaceName) {
+            // Hide all interfaces
+            document.querySelectorAll('.interface').forEach(el => el.classList.add('hidden'));
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.menu-button').forEach(el => el.classList.remove('active'));
+            
+            // Show selected interface
+            document.getElementById(`${interfaceName}-interface`).classList.remove('hidden');
+            
+            // Add active class to clicked button (if called from button click)
+            if (typeof event !== 'undefined' && event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // If called programmatically, find and activate the correct button
+                const buttons = document.querySelectorAll('.menu-button');
+                buttons.forEach(btn => {
+                    if (btn.onclick && btn.onclick.toString().includes(interfaceName)) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+            
+            currentInterface = interfaceName;
+            
+            // Load interface data
+            switch(interfaceName) {
+                case 'mining':
+                    loadMiningInterface();
+                    break;
+                case 'location':
+                    loadLocationInterface();
+                    break;
+                case 'travel':
+                    loadTravelInterface();
+                    break;
+                case 'trading':
+                    loadTradingInterface();
+                    break;
+                case 'shop':
+                    loadShopInterface();
+                    break;
+            }
+            
+            // Update sidebar based on current location
+            await updateSidebar();
+        }
+        
+        // Update sidebar based on current location facilities
+        async function updateSidebar() {
+            if (!gameStarted) return;
+            
+            const locationData = await apiCall('location');
+            
+            // Get all menu buttons
+            const miningBtn = document.querySelector('[onclick*="mining"]');
+            const tradingBtn = document.querySelector('[onclick*="trading"]');
+            const shopBtn = document.querySelector('[onclick*="shop"]');
+            
+            // Show/hide based on location facilities
+            if (miningBtn) {
+                if (Object.keys(locationData.resources || {}).length > 0) {
+                    miningBtn.style.display = 'block';
+                } else {
+                    miningBtn.style.display = 'none';
+                    if (currentInterface === 'mining') {
+                        showInterface('location'); // Switch to location if mining not available
+                    }
+                }
+            }
+            
+            if (tradingBtn) {
+                if (locationData.has_outpost) {
+                    tradingBtn.style.display = 'block';
+                } else {
+                    tradingBtn.style.display = 'none';
+                    if (currentInterface === 'trading') {
+                        showInterface('location'); // Switch to location if trading not available
+                    }
+                }
+            }
+            
+            if (shopBtn) {
+                if (locationData.has_ship_shop) {
+                    shopBtn.style.display = 'block';
+                } else {
+                    shopBtn.style.display = 'none';
+                    if (currentInterface === 'shop') {
+                        showInterface('location'); // Switch to location if shop not available
+                    }
+                }
+            }
+        }
+        
+        // Mining interface
+        async function loadMiningInterface() {
+            try {
+                const locationData = await apiCall('location');
+                
+                // Handle case where locationData is null or API call failed
+                if (!locationData || locationData.error) {
+                    document.getElementById('location-info').innerHTML = `
+                        <div class="message error">Location data unavailable. Please start a new game.</div>
+                    `;
+                    document.getElementById('resources-list').innerHTML = `
+                        <div class="message error">Unable to load mining resources.</div>
+                    `;
+                    return;
+                }
+                
+                document.getElementById('location-info').innerHTML = `
+                    <strong>Location:</strong> ${locationData.name || 'Unknown'}<br>
+                    <strong>Distance:</strong> ${(locationData.distance || 0).toFixed(1)} AU<br>
+                    <strong>Mining Difficulty:</strong> ${(locationData.mining_difficulty || 1.0).toFixed(1)}x
+                `;
+                
+                const resourcesList = document.getElementById('resources-list');
+                resourcesList.innerHTML = '';
+                
+                if (!locationData.resources || Object.keys(locationData.resources).length === 0) {
+                    resourcesList.innerHTML = '<div class="message error">No resources available at this location!</div>';
+                } else {
+                    Object.entries(locationData.resources).forEach(([resource, amount]) => {
+                        const resourceDiv = document.createElement('div');
+                        resourceDiv.className = 'resource-item available';
+                        resourceDiv.innerHTML = `
+                            <div>
+                                <strong>${resource}</strong><br>
+                                ${amount} units available
+                            </div>
+                            <button class="action-button" onclick="mineResource('${resource}')">Mine</button>
+                        `;
+                        resourcesList.appendChild(resourceDiv);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading mining interface:', error);
+                document.getElementById('location-info').innerHTML = `
+                    <div class="message error">Error loading location: ${error.message}</div>
+                `;
+                document.getElementById('resources-list').innerHTML = `
+                    <div class="message error">Error loading resources: ${error.message}</div>
+                `;
+            }
+        }
+        
+        async function mineResource(resourceType) {
+            const result = await apiCall('mine', 'POST', { resource_type: resourceType });
+            showMessage(result.message, result.success ? 'success' : 'error');
+            
+            if (result.success) {
+                await updateStatus();
+                await loadMiningInterface();
+            }
+        }
+        
+        // Location interface
+        async function loadLocationInterface() {
+            try {
+                const locationData = await apiCall('location');
+                
+                // Handle case where locationData is null or API call failed
+                if (!locationData || locationData.error) {
+                    document.getElementById('detailed-location-info').innerHTML = `
+                        <div class="message error">
+                            <h3>⚠️ Location Data Unavailable</h3>
+                            <p>Unable to load location information. Game may not be initialized.</p>
+                            <p>Please start a new game from the main menu.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let infoHTML = `
+                    <h3>${locationData.name || 'Unknown Location'}</h3>
+                    <p><strong>Type:</strong> ${locationData.body_type || 'Unknown'}</p>
+                    <p><strong>Distance from start:</strong> ${(locationData.distance || 0).toFixed(1)} AU</p>
+                    <p><strong>Mining difficulty:</strong> ${(locationData.mining_difficulty || 1.0).toFixed(1)}x</p>
+                `;
+            
+            // Show facilities information
+            let facilitiesHTML = '';
+            
+            if (locationData.has_outpost) {
+                facilitiesHTML += `
+                    <div style="background: rgba(0, 255, 136, 0.1); border: 1px solid #00ff88; border-radius: 5px; padding: 10px; margin: 10px 0;">
+                        <h4>🏪 Trading Outpost Available</h4>
+                        <p><strong>Outpost:</strong> ${locationData.outpost_name}</p>
+                        <p><strong>Type:</strong> ${locationData.outpost_type}</p>
+                        <p>You can trade your cargo here!</p>
+                    </div>
+                `;
+            }
+            
+            if (locationData.has_ship_shop) {
+                facilitiesHTML += `
+                    <div style="background: rgba(136, 170, 255, 0.1); border: 1px solid #88aaff; border-radius: 5px; padding: 10px; margin: 10px 0;">
+                        <h4>🔧 Ship Shop Available</h4>
+                        <p>Upgrade your ship or purchase new vessels here!</p>
+                    </div>
+                `;
+            }
+            
+            if (!locationData.has_outpost && !locationData.has_ship_shop && Object.keys(locationData.resources).length === 0) {
+                facilitiesHTML += `
+                    <div style="background: rgba(255, 68, 68, 0.1); border: 1px solid #ff4444; border-radius: 5px; padding: 10px; margin: 10px 0;">
+                        <h4>⚠️ No Facilities</h4>
+                        <p>This location has no facilities. Travel to other locations for trading or ship services.</p>
+                    </div>
+                `;
+            } else if (!locationData.has_outpost) {
+                facilitiesHTML += `
+                    <div style="background: rgba(255, 200, 68, 0.1); border: 1px solid #ffcc44; border-radius: 5px; padding: 10px; margin: 10px 0;">
+                        <h4>ℹ️ No Trading Available</h4>
+                        <p>This location has no trading outpost. You must travel to a station or facility to sell your cargo.</p>
+                    </div>
+                `;
+            }
+            
+                infoHTML += facilitiesHTML;
+                
+                infoHTML += '<h4>Available Resources:</h4>';
+                
+                if (!locationData.resources || Object.keys(locationData.resources).length === 0) {
+                    infoHTML += '<p>No mining resources available at this location.</p>';
+                } else {
+                    infoHTML += '<ul>';
+                    Object.entries(locationData.resources).forEach(([resource, amount]) => {
+                        infoHTML += `<li>${resource}: ${amount} units</li>`;
+                    });
+                    infoHTML += '</ul>';
+                }
+                
+                document.getElementById('detailed-location-info').innerHTML = infoHTML;
+                
+            } catch (error) {
+                console.error('Error loading location interface:', error);
+                document.getElementById('detailed-location-info').innerHTML = `
+                    <div class="message error">
+                        <h3>⚠️ Error Loading Location</h3>
+                        <p>Failed to load location information: ${error.message}</p>
+                        <p>Please refresh the page or restart the game.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Travel interface
+        async function loadTravelInterface() {
+            const destinations = await apiCall('destinations');
+            
+            const destinationsList = document.getElementById('destinations-list');
+            destinationsList.innerHTML = '';
+            
+            if (destinations.length === 0) {
+                destinationsList.innerHTML = '<div class="message error">No other locations available!</div>';
+            } else {
+                destinations.forEach(dest => {
+                    const destDiv = document.createElement('div');
+                    destDiv.className = `destination-item ${dest.can_travel ? 'available' : 'unavailable'}`;
+                    
+                    let features = [];
+                    if (dest.has_outpost) features.push(`🏪 ${dest.outpost_name}`);
+                    if (dest.has_ship_shop) features.push('🔧 Ship Shop');
+                    if (dest.has_resources) features.push('⛏️ Mining Available');
+                    if (features.length === 0) features.push('⚠️ No facilities');
+                    
+                    destDiv.innerHTML = `
+                        <div>
+                            <strong>${dest.name}</strong> (${dest.body_type})<br>
+                            Distance: ${dest.distance.toFixed(1)} AU<br>
+                            Fuel cost: ${dest.fuel_cost}<br>
+                            <small style="color: #88aaff;">${features.join(', ')}</small>
+                        </div>
+                        <button class="action-button" onclick="travelTo(${dest.index})" ${!dest.can_travel ? 'disabled' : ''}>
+                            ${dest.can_travel ? 'Travel' : 'No Fuel'}
+                        </button>
+                    `;
+                    destinationsList.appendChild(destDiv);
+                });
+            }
+        }
+        
+        async function travelTo(destinationIndex) {
+            const result = await apiCall('travel', 'POST', { destination_index: destinationIndex });
+            showMessage(result.message, result.success ? 'success' : 'error');
+            
+            if (result.success) {
+                await updateStatus();
+                await updateSidebar(); // Update available options after travel
+                await loadTravelInterface();
+            }
+        }
+        
+        // Trading interface
+        async function loadTradingInterface() {
+            const outpostData = await apiCall('outposts');
+            
+            const outpostsList = document.getElementById('outposts-list');
+            outpostsList.innerHTML = '';
+            
+            if (gameData.status && Object.keys(gameData.status.cargo).length === 0) {
+                outpostsList.innerHTML = '<div class="message error">You have no cargo to trade!</div>';
+                return;
+            }
+            
+            if (!outpostData) {
+                outpostsList.innerHTML = `
+                    <div class="message error">
+                        <h3>❌ No Trading Outpost Here</h3>
+                        <p>This location doesn't have a trading outpost. You need to travel to a location with an outpost to sell your cargo.</p>
+                        <p><strong>Tip:</strong> Look for stations and research facilities that have trading posts!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const outpostDiv = document.createElement('div');
+            outpostDiv.className = 'outpost-item';
+            
+            let cargoHTML = '';
+            if (outpostData.cargo_prices.length > 0) {
+                cargoHTML = '<h4>Your Cargo Prices:</h4>';
+                outpostData.cargo_prices.forEach(cargo => {
+                    cargoHTML += `<div>${cargo.resource}: ${cargo.amount} units @ ${cargo.price.toFixed(1)} = ${Math.floor(cargo.value)} credits</div>`;
+                });
+                cargoHTML += `<div style="margin-top: 10px;"><strong>Total Value: ${Math.floor(outpostData.total_value)} credits</strong></div>`;
+            }
+            
+            outpostDiv.innerHTML = `
+                <div>
+                    <h3>🏪 ${outpostData.name}</h3>
+                    <p><strong>Location:</strong> ${outpostData.location_name}</p>
+                    <p><strong>Type:</strong> ${outpostData.outpost_type}</p>
+                    ${cargoHTML}
+                    <div style="margin-top: 15px;">
+                        <button class="action-button" onclick="tradeAtOutpost(null, true)">Sell All Cargo</button>
+                    </div>
+                </div>
+            `;
+            outpostsList.appendChild(outpostDiv);
+        }
+        
+        async function tradeAtOutpost(resourceType, sellAll) {
+            const result = await apiCall('trade', 'POST', { 
+                resource_type: resourceType, 
+                sell_all: sellAll 
+            });
+            showMessage(result.message, result.success ? 'success' : 'error');
+            
+            if (result.success) {
+                await updateStatus();
+                await loadTradingInterface();
+            }
+        }
+        
+        // Shop interface
+        async function loadShopInterface() {
+            const shopData = await apiCall('shop');
+            
+            // Load upgrades tab
+            const upgradesTab = document.getElementById('upgrades-tab');
+            upgradesTab.innerHTML = '';
+            
+            shopData.upgrades.forEach(upgrade => {
+                const upgradeDiv = document.createElement('div');
+                upgradeDiv.className = `shop-item ${upgrade.affordable ? 'affordable' : 'expensive'}`;
+                upgradeDiv.innerHTML = `
+                    <div>
+                        <strong>${upgrade.name}</strong><br>
+                        ${upgrade.description}<br>
+                        <strong>Cost: ${Math.floor(upgrade.cost)} credits</strong>
+                    </div>
+                    <button class="action-button" onclick="buyFromShop('upgrade', ${upgrade.index})" ${!upgrade.affordable ? 'disabled' : ''}>
+                        ${upgrade.affordable ? 'Buy' : 'Too Expensive'}
+                    </button>
+                `;
+                upgradesTab.appendChild(upgradeDiv);
+            });
+            
+            // Load ships tab
+            const shipsTab = document.getElementById('ships-tab');
+            shipsTab.innerHTML = '';
+            
+            shopData.ships.forEach(ship => {
+                const shipDiv = document.createElement('div');
+                shipDiv.className = `shop-item ${ship.affordable ? 'affordable' : 'expensive'}`;
+                shipDiv.innerHTML = `
+                    <div>
+                        <strong>${ship.name}</strong><br>
+                        ${ship.description}<br>
+                        Cargo: ${ship.stats.cargo_capacity}, Mining: ${ship.stats.mining_efficiency}, Speed: ${ship.stats.speed}, Fuel: ${ship.stats.fuel_capacity}<br>
+                        <strong>Cost: ${Math.floor(ship.cost)} credits</strong>
+                    </div>
+                    <button class="action-button" onclick="buyFromShop('ship', ${ship.index})" ${!ship.affordable ? 'disabled' : ''}>
+                        ${ship.affordable ? 'Buy' : 'Too Expensive'}
+                    </button>
+                `;
+                shipsTab.appendChild(shipDiv);
+            });
+        }
+        
+        async function buyFromShop(itemType, itemIndex) {
+            const result = await apiCall('shop/buy', 'POST', { 
+                item_type: itemType, 
+                item_index: itemIndex 
+            });
+            showMessage(result.message, result.success ? 'success' : 'error');
+            
+            if (result.success) {
+                await updateStatus();
+                await loadShopInterface();
+            }
+        }
+        
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+        
+        
+        // Show message
+        function showMessage(message, type) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            
+            messagesDiv.appendChild(messageDiv);
+            
+            // Auto-remove message after 5 seconds
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

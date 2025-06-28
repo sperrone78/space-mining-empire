@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Test</title>
+    <style>
+        .hidden { display: none; }
+        .start-screen { background: lightblue; padding: 20px; }
+        .welcome-screen { background: lightgreen; padding: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Debug Test</h1>
+    
+    <div id="start-screen" class="start-screen hidden">
+        <h2>Start Screen</h2>
+        <button onclick="startGame()">New Game</button>
+    </div>
+    
+    <div id="welcome-screen" class="welcome-screen hidden">
+        <h2>Welcome Screen</h2>
+        <div id="welcome-message">Loading...</div>
+    </div>
+    
+    <button onclick="showStart()">Force Show Start</button>
+    <button onclick="showWelcome()">Force Show Welcome</button>
+    
+    <script>
+        console.log('Script loading...');
+        
+        function showStart() {
+            console.log('Showing start screen');
+            document.getElementById('start-screen').classList.remove('hidden');
+            document.getElementById('welcome-screen').classList.add('hidden');
+        }
+        
+        function showWelcome() {
+            console.log('Showing welcome screen');
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('welcome-screen').classList.remove('hidden');
+            document.getElementById('welcome-message').innerHTML = 'This is the welcome message!';
+        }
+        
+        function startGame() {
+            console.log('Start game called');
+            showWelcome();
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            showStart();
+        });
+    </script>
+</body>
+</html>
